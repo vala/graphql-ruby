@@ -31,6 +31,7 @@ describe GraphQL::Execution::Interpreter do
 
     class Expansion < GraphQL::Schema::Object
       field :sym, String, null: false
+      field :name, String, null: false
       field :cards, ["InterpreterTest::Card"], null: false
 
       def cards
@@ -41,6 +42,11 @@ describe GraphQL::Execution::Interpreter do
     class Card < GraphQL::Schema::Object
       field :name, String, null: false
       field :colors, "[InterpreterTest::Color]", null: false
+      field :expansion, Expansion, null: false
+
+      def expansion
+        Query::EXPANSIONS.find { |e| e.sym == @object.expansion_sym }
+      end
     end
 
     class Color < GraphQL::Schema::Enum
@@ -66,6 +72,9 @@ describe GraphQL::Execution::Interpreter do
     {
       card(name: "Dark Confidant") {
         colors
+        expansion {
+          name
+        }
       }
       expansion(sym: "RAV") {
         cards {
@@ -77,6 +86,7 @@ describe GraphQL::Execution::Interpreter do
 
     pp result
     assert_equal ["BLACK"], result["data"]["card"]["colors"]
+    assert_equal "Ravnica, City of Guilds", result["data"]["card"]["expansion"]["name"]
     assert_equal [{"name" => "Dark Confidant"}], result["data"]["expansion"]["cards"]
   end
 end
