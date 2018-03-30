@@ -141,6 +141,8 @@ module GraphQL
         end
 
         method_name = @method || @hash_key || Member::BuildType.underscore(@name)
+        @resolve_method_name = method_name
+        @resolve_method_sym = method_name.to_sym
 
         field_defn = if @field
           @field.dup
@@ -213,6 +215,39 @@ module GraphQL
         end
 
         field_defn
+      end
+
+      # TODO Think about how this should really work
+      def resolve(obj, args)
+        if obj.respond_to?(@resolve_method_name)
+          public_send_field(obj, @resolve_method_name, args)
+        elsif obj.object.is_a?(Hash)
+          inner_object = obj.object
+          inner_object[@resolve_method_name] || inner_object[@resolve_method_sym]
+        elsif obj.object.respond_to?(@resolve_method_name)
+          public_send_field(obj.object, @resolve_method_name, args)
+        else
+          raise "Nice descriptive error"
+        end
+      end
+
+      NO_ARGS = {}.freeze
+
+      def public_send_field(obj, method_name, ruby_kwargs)
+        if ruby_kwargs.any?
+          obj.public_send(method_name, ruby_kwargs)
+        else
+          obj.public_send(method_name)
+        end
+      end
+
+      # TODO don't backwards-compat this, find a better way.
+      def arguments_class
+        @arguments_class ||= begin
+          f = to_graphql
+          GraphQL::Query::Arguments.construct_arguments_class(f)
+          f.arguments_class
+        end
       end
     end
   end

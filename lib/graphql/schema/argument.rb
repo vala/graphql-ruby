@@ -54,6 +54,19 @@ module GraphQL
         end
         argument
       end
+
+      # TODO instead of fitting in to LiteralInput, rewrite it
+      def type
+        @type ||= to_graphql.type
+      end
+
+      def prepare(x, _ctx)
+        x
+      end
+
+      def default_value?
+        NO_DEFAULT != @default_value
+      end
     end
   end
 end

@@ -62,6 +62,22 @@ module GraphQL
 
           obj_type
         end
+
+        def evaluate_selections(object:, selections:, query:)
+          result = {}
+          selections.each do |ast_field|
+            field = fields.fetch(Member::BuildType.underscore(ast_field.name))
+            args = query.arguments_for(ast_field, field)
+            field_result = if args.any?
+              field.resolve(object, args.to_kwargs)
+            else
+              field.resolve()
+            end
+            field_result_name = ast_field.alias || ast_field.name
+            result[field_result_name] = field_result
+          end
+          result
+        end
       end
     end
   end
