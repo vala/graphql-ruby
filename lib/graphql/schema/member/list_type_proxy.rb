@@ -19,6 +19,10 @@ module GraphQL
         def to_non_null_type
           NonNullTypeProxy.new(self)
         end
+
+        def evaluate_selections(object:, selections:, interpreter:)
+          @member.evaluate_selections(object: object, selections: selections, interpreter: interpreter)
+        end
       end
     end
   end

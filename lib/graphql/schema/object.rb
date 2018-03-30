@@ -63,18 +63,24 @@ module GraphQL
           obj_type
         end
 
-        def evaluate_selections(object:, selections:, query:)
+        def evaluate_selections(object:, selections:, interpreter:)
           result = {}
+          # Apply the type definition as a wrapper around the application object
+          type_proxy = self.new(object, interpreter.query.context)
           selections.each do |ast_field|
             field = fields.fetch(Member::BuildType.underscore(ast_field.name))
-            args = query.arguments_for(ast_field, field)
-            field_result = if args.any?
-              field.resolve(object, args.to_kwargs)
-            else
-              field.resolve()
-            end
+            args = interpreter.arguments_for(ast_field, field)
+            field_result = field.resolve(type_proxy, args)
             field_result_name = ast_field.alias || ast_field.name
-            result[field_result_name] = field_result
+            # TODO shouldn't require metadata
+            next_type = field.type
+            # TODO This method name (`evaluate_selections`) doesn't make sense for scalars
+            finished_result = next_type.evaluate_selections(
+                object: field_result,
+                selections: ast_field.selections,
+                interpreter: interpreter,
+            )
+            result[field_result_name] = finished_result
           end
           result
         end

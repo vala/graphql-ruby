@@ -17,6 +17,15 @@ module GraphQL
     #
     # Previously, look-ahead was done with the irep_node. Now,
     # we need some way to do that with method overrides.
+    #
+    # The interpreter is going to be the centralized host
+    # of runtime caches like fragment spreads and
+    # prepared argument values.
+    #
+    # Somehow, those cached values should be shared
+    # between passes over the tree.
+    #
+    # TODO: could it be made into a straight-up AST visitor?
     class Interpreter
       attr_reader :query
       # This method is the Executor API
@@ -32,14 +41,25 @@ module GraphQL
         object_type = query.root_type_for_operation(operation.operation_type)
         application_object = query.root_value
 
-        # TODO use classes at runtime
-        object_class = object_type.metadata[:object_class]
-
-        result = object_class.evaluate_selections(
+        result = object_type.evaluate_selections(
           object: application_object,
           selections: selections,
-          query: query
+          interpreter: self,
         )
+      end
+
+      # This is a new codepath for Query::ArgumentsCache
+      # and
+      # TODO: HAHAH this is very not good
+      # - Apply scalar coerce functions
+      # - Consider `variables`
+      # - Cache the results and reuse them?
+      def arguments_for(ast_node, field_instance)
+        ruby_kwargs = {}
+        ast_node.arguments.each do |ast_arg|
+          ruby_kwargs[Schema::Member::BuildType.underscore(ast_arg.name).to_sym] = ast_arg.value
+        end
+        ruby_kwargs
       end
     end
   end

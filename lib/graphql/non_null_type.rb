@@ -76,5 +76,10 @@ module GraphQL
     def non_null?
       true
     end
+
+    # TODO put this in schema/somethign.rb
+    def evaluate_selections(object:, selections:, interpreter:)
+      of_type.evaluate_selections(object: object, selections: selections, interpreter: interpreter)
+    end
   end
 end

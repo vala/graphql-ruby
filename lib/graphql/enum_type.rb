@@ -151,6 +151,10 @@ module GraphQL
     class UnresolvedValueError < GraphQL::Error
     end
 
+    def evaluate_selections(object:, selections:, interpreter:)
+      metadata[:type_class].evaluate_selections(object: object, selections: selections, interpreter: interpreter)
+    end
+
     private
 
     # Get the underlying value for this enum value

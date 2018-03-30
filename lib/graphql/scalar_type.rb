@@ -102,6 +102,10 @@ module GraphQL
       GraphQL::TypeKinds::SCALAR
     end
 
+    def evaluate_selections(object:, selections:, interpreter:)
+      metadata[:type_class].evaluate_selections(object: object, selections: selections, interpreter: interpreter)
+    end
+
     private
 
     def ensure_two_arg(callable, method_name)

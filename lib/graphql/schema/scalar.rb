@@ -17,10 +17,23 @@ module GraphQL
           type_defn = GraphQL::ScalarType.new
           type_defn.name = graphql_name
           type_defn.description = description
+          type_defn.default_scalar = default_scalar
+          type_defn.metadata[:type_class] = self
           type_defn.coerce_result = method(:coerce_result)
           type_defn.coerce_input = method(:coerce_input)
           type_defn.metadata[:type_class] = self
           type_defn
+        end
+
+        def default_scalar(new_val = nil)
+          if !new_val.nil?
+            @default_scalar = new_val
+          end
+          @default_scalar
+        end
+
+        def evaluate_selections(object:, selections:, interpreter:)
+          coerce_result(object, interpreter.query.context)
         end
       end
     end

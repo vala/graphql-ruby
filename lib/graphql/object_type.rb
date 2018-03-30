@@ -102,6 +102,10 @@ module GraphQL
       dirty_ifaces.concat(interfaces)
     end
 
+    def evaluate_selections(object:, selections:, interpreter:)
+      metadata[:object_class].evaluate_selections(object: object, selections: selections, interpreter: interpreter)
+    end
+
     protected
 
     attr_reader :dirty_interfaces, :dirty_inherited_interfaces

@@ -53,6 +53,15 @@ module GraphQL
       true
     end
 
+    # TODO should be in schema/list_type.rb ?
+    def evaluate_selections(object:, selections:, interpreter:)
+      result = []
+      object.each do |inner_obj|
+        result << of_type.evaluate_selections(object: inner_obj, selections: selections, interpreter: interpreter)
+      end
+      result
+    end
+
     private
 
     def coerce_non_null_input(value, ctx)

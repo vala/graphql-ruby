@@ -217,6 +217,10 @@ module GraphQL
         field_defn
       end
 
+      def type
+        @type ||= Member::BuildType.parse_type(@return_type_expr, null: @return_type_null)
+      end
+
       # TODO Think about how this should really work
       def resolve(obj, args)
         if obj.respond_to?(@resolve_method_name)
@@ -227,26 +231,23 @@ module GraphQL
         elsif obj.object.respond_to?(@resolve_method_name)
           public_send_field(obj.object, @resolve_method_name, args)
         else
-          raise "Nice descriptive error"
+          raise <<-ERR
+Failed to implement #{@owner.name}.#{name}, tried:
+
+- `#{obj.class}##{@resolve_method_name}`, which did not exist
+- `#{obj.object.class}##{@resolve_method_name}`, which did not exist
+- Looking up hash key `#{@resolve_method_name.inspect}` on `#{obj.object}`, but it wasn't a Hash
+
+To implement this field, define one of the methods above (and check for typos)
+ERR
         end
       end
-
-      NO_ARGS = {}.freeze
 
       def public_send_field(obj, method_name, ruby_kwargs)
         if ruby_kwargs.any?
           obj.public_send(method_name, ruby_kwargs)
         else
           obj.public_send(method_name)
-        end
-      end
-
-      # TODO don't backwards-compat this, find a better way.
-      def arguments_class
-        @arguments_class ||= begin
-          f = to_graphql
-          GraphQL::Query::Arguments.construct_arguments_class(f)
-          f.arguments_class
         end
       end
     end

@@ -50,6 +50,7 @@ module GraphQL
           enum_type.name = graphql_name
           enum_type.description = description
           enum_type.introspection = introspection
+          enum_type.metadata[:type_class] = self
           values.each do |name, val|
             enum_type.add_value(val.to_graphql)
           end
@@ -63,6 +64,14 @@ module GraphQL
             @enum_value_class = new_enum_value_class
           end
           @enum_value_class || (superclass <= GraphQL::Schema::Enum ? superclass.enum_value_class : nil)
+        end
+
+        # TODO this will never have selections, it should have a better name
+        # TODO needs to apply filters
+        def evaluate_selections(object:, selections:, interpreter:)
+          enum_value = values.each_value.find { |e| e.value == object }
+          # TODO handle misses
+          enum_value.value
         end
 
         private
