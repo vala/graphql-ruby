@@ -103,7 +103,7 @@ module GraphQL
     end
 
     def evaluate_selections(object:, selections:, interpreter:)
-      metadata[:object_class].evaluate_selections(object: object, selections: selections, interpreter: interpreter)
+      metadata[:type_class].evaluate_selections(object: object, selections: selections, interpreter: interpreter)
     end
 
     protected
