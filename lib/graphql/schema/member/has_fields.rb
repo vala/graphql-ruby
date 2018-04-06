@@ -43,8 +43,12 @@ module GraphQL
           elsif self.is_a?(Class)
             superclass.respond_to?(:field_class) ? superclass.field_class : GraphQL::Schema::Field
           else
-            ancestor = ancestors[1..-1].find { |a| a.respond_to?(:field_class) && a.field_class }
-            ancestor ? ancestor.field_class : GraphQL::Schema::Field
+            extended_interface = singleton_class.ancestors[1..-1].find { |a| a.respond_to?(:field_class) }
+            if extended_interface
+              extended_interface.field_class
+            else
+              GraphQL::Schema::Field
+            end
           end
         end
 

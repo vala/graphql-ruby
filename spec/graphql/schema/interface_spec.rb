@@ -11,11 +11,11 @@ describe GraphQL::Schema::Interface do
     end
 
     module NewInterface1
-      include Jazz::GloballyIdentifiableType
+      extend Jazz::GloballyIdentifiableType
     end
 
     module NewInterface2
-      include Jazz::GloballyIdentifiableType
+      extend Jazz::GloballyIdentifiableType
       def new_method
       end
     end
@@ -42,6 +42,23 @@ describe GraphQL::Schema::Interface do
 
       # It gets an overridden description:
       assert_equal "The ID !!!!!", new_object_2.graphql_definition.fields["id"].description
+    end
+
+    it "Supports is_a? checks" do
+      new_object_1 = Class.new(GraphQL::Schema::Object) do
+        implements NewInterface1
+      end
+
+      object_instance = new_object_1.new(nil, nil)
+      assert object_instance.is_a?(new_object_1)
+      assert object_instance.is_a?(NewInterface1)
+      assert object_instance.is_a?(GraphQL::Schema::Object)
+      refute object_instance.is_a?(GraphQL::Schema::Interface)
+
+      assert new_object_1 < GraphQL::Schema::Object
+      refute new_object_1 < GraphQL::Schema::Interface
+      # This fails
+      assert NewInterface1 < GraphQL::Schema::Interface
     end
   end
 

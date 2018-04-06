@@ -100,7 +100,7 @@ module Jazz
   end
 
   module BaseInterface
-    include GraphQL::Schema::Interface
+    extend GraphQL::Schema::Interface
     # Use this overridden field class
     field_class BaseField
   end
@@ -125,7 +125,7 @@ module Jazz
   # Some arbitrary global ID scheme
   # *Type suffix is removed automatically
   module GloballyIdentifiableType
-    include BaseInterface
+    extend BaseInterface
     description "A fetchable object in the system"
     field :id, ID, "A unique identifier for this object", null: false
     field :upcased_id, ID, null: false, upcase: true, method: :id

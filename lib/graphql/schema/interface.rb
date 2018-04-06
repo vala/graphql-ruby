@@ -9,27 +9,43 @@ module GraphQL
         include GraphQL::Schema::Member::BaseDSLMethods
         include GraphQL::Schema::Member::HasFields
 
+        def definition_methods(&block)
+          DefinitionMethods.module_eval(&block)
+        end
+
         # Here's the tricky part. Make sure behavior keeps making its way down the inheritance chain.
-        def included(child_class)
-          if !child_class.is_a?(Class)
+        def extended(child_interface)
+          if !child_interface.is_a?(Class)
             # In this case, it's been included into another interface.
             # This is how interface inheritance is implemented
-            child_class.const_set(:DefinitionMethods, Module.new)
-            child_class.extend(child_class::DefinitionMethods)
-            # We need this before we can call `own_interfaces`
-            child_class.extend(Schema::Interface::DefinitionMethods)
-            child_class.own_interfaces << self
-            child_class.own_interfaces.each do |interface_defn|
-              child_class.extend(interface_defn::DefinitionMethods)
+            if !defined?(child_interface::DefinitionMethods)
+              mod = Module.new
+              child_interface.const_set(:DefinitionMethods, mod)
+              mod
             end
-          elsif child_class < GraphQL::Schema::Object
+            child_interface.extend(child_interface::DefinitionMethods)
+            # We need this before we can call `own_interfaces`
+            child_interface.extend(Schema::Interface::DefinitionMethods)
+            # This provides type aliases ID, Boolean, Int
+            child_interface.include(GraphQL::Schema::Member::GraphQLTypeNames)
+            child_interface.own_interfaces << self
+            child_interface.own_interfaces.each do |interface_defn|
+              child_interface.extend(interface_defn::DefinitionMethods)
+            end
+          end
+
+          super
+        end
+
+        def included(child_class)
+          if child_class < GraphQL::Schema::Object
             # This is being included into an object type, make sure it's using `implements(...)`
             backtrace_line = caller(0, 10).find { |line| line.include?("schema/object.rb") && line.include?("in `implements'")}
             if !backtrace_line
               raise "Attach interfaces using `implements(#{self})`, not `include(#{self})`"
             end
           end
-
+          child_class.extend(self::DefinitionMethods)
           super
         end
 
